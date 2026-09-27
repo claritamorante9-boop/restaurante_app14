@@ -1,49 +1,121 @@
+import os
 import tkinter as tk
-
+from tkinter import ttk
 
 class MainView:
-    def __init__(self, ventana, servicio, usuario, on_logout):
+    def __init__(self, ventana, servicio, usuario_actual=None):
+        self.ventana = ventana
         self.servicio = servicio
-        self.usuario = usuario
-        self.on_logout = on_logout
+        self.usuario_actual = usuario_actual
+        self.ventana.title("Restaurante App — Sistema de Ventas")
 
-        self.frame = tk.Frame(ventana, bg="#f0f0f0")
-        self.frame.pack(fill="both", expand=True)
+        # === Cargar logo ===
+        self.logo = None
+        ruta_logo = os.path.join("assets", "logo.png")
+        if os.path.exists(ruta_logo):
+            try:
+                from PIL import Image, ImageTk
+                imagen_original = Image.open(ruta_logo)
+                ancho_nuevo = imagen_original.width // 3
+                alto_nuevo = imagen_original.height // 3
+                imagen_redimensionada = imagen_original.resize(
+                    (ancho_nuevo, alto_nuevo),
+                    Image.Resampling.LANCZOS
+                )
+                self.logo = ImageTk.PhotoImage(imagen_redimensionada)
+            except ImportError:
+                print("Instala pillow: pip install pillow")
+            except Exception as e:
+                print(f"Logo no cargado: {e}")
 
-        # Barra superior
-        cabecera = tk.Frame(self.frame, bg="#2c3e50")
-        cabecera.pack(fill="x")
-        tk.Label(cabecera, text=f"Restaurante App - {usuario.nombre}", fg="white", bg="#2c3e50", font=("Arial", 14, "bold")).pack(side="left", padx=10, pady=10)
-        tk.Button(cabecera, text="Cerrar sesión", bg="#e74c3c", fg="white", command=self.on_logout).pack(side="right", padx=10, pady=10)
+        self._construir_interfaz()
+        self._cargar_listas()
 
-        # Contenedor principal
-        principal = tk.Frame(self.frame, bg="#f0f0f0")
-        principal.pack(fill="both", expand=True, padx=10, pady=10)
+    def _construir_interfaz(self):
+        marco = ttk.Frame(self.ventana, padding=15)
+        marco.pack(fill="both", expand=True)
 
-        # Panel de navegación (izquierda)
-        nav = tk.Frame(principal, bg="#ecf0f1", width=180)
-        nav.pack(side="left", fill="y")
-        nav.pack_propagate(False)
-        tk.Label(nav, text="Navegación", bg="#ecf0f1", font=("Arial", 12, "bold")).pack(pady=(15, 10))
-        tk.Button(nav, text="Productos", width=18, command=self.mostrar_productos).pack(pady=5)
-        tk.Button(nav, text="Usuarios", width=18, command=self.mostrar_usuarios).pack(pady=5)
+        if self.logo:
+            ttk.Label(marco, image=self.logo).pack(pady=10)
 
-        # Panel de contenido (derecha)
-        self.contenido = tk.Frame(principal, bg="white", bd=1, relief="solid")
-        self.contenido.pack(side="left", fill="both", expand=True, padx=10)
+        cuaderno = ttk.Notebook(marco)
+        cuaderno.pack(fill="both", expand=True)
 
-        self.texto = tk.Text(self.contenido, width=50, height=15)
-        self.texto.pack(padx=10, pady=10)
+        p_ventas = ttk.Frame(cuaderno, padding=10)
+        cuaderno.add(p_ventas, text="Registrar Venta")
 
-    def mostrar_productos(self):
-        self.texto.delete("1.0", tk.END)
-        for p in self.servicio.listar_productos():
-            self.texto.insert(tk.END, f"{p.id}. {p.nombre} - ${p.precio} - {p.cantidad} uds\n")
+        form = ttk.Frame(p_ventas)
+        form.pack(fill="both", expand=True)
 
-    def mostrar_usuarios(self):
-        self.texto.delete("1.0", tk.END)
-        for u in self.servicio.listar_usuarios():
-            self.texto.insert(tk.END, f"{u.id}. {u.nombre} ({u.usuario})\n")
+        ttk.Label(form, text="Usuario:").grid(row=0, column=0, sticky="w", pady=5)
+        self.cmb_usuario = ttk.Combobox(form, state="readonly", width=35)
+        self.cmb_usuario.grid(row=0, column=1, pady=5)
 
-    def destruir(self):
-        self.frame.destroy()
+        ttk.Label(form, text="Producto:").grid(row=1, column=0, sticky="w", pady=5)
+        self.cmb_producto = ttk.Combobox(form, state="readonly", width=35)
+        self.cmb_producto.grid(row=1, column=1, pady=5)
+
+        ttk.Label(form, text="Cantidad:").grid(row=2, column=0, sticky="w", pady=5)
+        self.ent_cantidad = ttk.Entry(form, width=38)
+        self.ent_cantidad.grid(row=2, column=1, pady=5)
+
+        ttk.Button(form, text="Registrar Venta",
+                   command=self._registrar_venta).grid(row=3, column=0, columnspan=2, pady=10)
+
+        ttk.Label(form, text="Historial de Ventas:").grid(row=4, column=0, columnspan=2, sticky="w", pady=(15, 5))
+        columnas = ("usuario", "producto", "cantidad", "fecha")
+        self.tabla = ttk.Treeview(form, columns=columnas, show="headings", height=8)
+        for col in columnas:
+            self.tabla.heading(col, text=col.title())
+            self.tabla.column(col, width=160)
+        self.tabla.grid(row=5, column=0, columnspan=2, sticky="nsew")
+
+        form.grid_columnconfigure(1, weight=1)
+        form.grid_rowconfigure(5, weight=1)
+
+    def _cargar_listas(self):
+        usuarios = self.servicio.obtener_usuarios()
+        self.cmb_usuario["values"] = [u.nombre for u in usuarios]
+        if usuarios:
+            self.cmb_usuario.current(0)
+
+        productos = self.servicio.obtener_productos()
+        self.cmb_producto["values"] = [f"{p.nombre} - ${p.precio}" for p in productos]
+        if productos:
+            self.cmb_producto.current(0)
+
+        self._actualizar_tabla()
+
+    def _registrar_venta(self):
+        try:
+            cant = int(self.ent_cantidad.get())
+            if cant <= 0:
+                return
+            i_u = self.cmb_usuario.current()
+            i_p = self.cmb_producto.current()
+            if i_u < 0 or i_p < 0:
+                return
+
+            usuarios = self.servicio.obtener_usuarios()
+            productos = self.servicio.obtener_productos()
+            usuario = usuarios[i_u]
+            producto = productos[i_p]
+
+            self.servicio.registrar_venta(usuario.id, producto.id, cant)
+            self.ent_cantidad.delete(0, "end")
+            self._actualizar_tabla()
+        except ValueError:
+            pass
+
+    def _actualizar_tabla(self):
+        for fila in self.tabla.get_children():
+            self.tabla.delete(fila)
+        usuarios = {u.id: u.nombre for u in self.servicio.obtener_usuarios()}
+        productos = {p.id: p.nombre for p in self.servicio.obtener_productos()}
+        for v in self.servicio.obtener_ventas():
+            self.tabla.insert("", "end", values=(
+                usuarios.get(v.usuario_id, "Desconocido"),
+                productos.get(v.producto_id, "Desconocido"),
+                v.cantidad,
+                v.fecha
+            ))

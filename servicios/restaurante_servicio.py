@@ -1,58 +1,62 @@
+from modelos import Usuario, Producto, Venta
+import json
 import os
-from modelos.producto import Producto
-from modelos.usuario import Usuario
-from servicios.archivo_servicio import ArchivoServicio
 
 class RestauranteServicio:
     def __init__(self):
-        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.ruta_usuarios = os.path.join(base, "datos", "usuarios.json")
-        self.ruta_productos = os.path.join(base, "datos", "productos.json")
-        self.usuarios = self._cargar_usuarios()
-        self.productos = self._cargar_productos()
+        self.usuarios = []
+        self.productos = []
+        self.ventas = []
+        self._cargar_datos()
 
-    def _cargar_usuarios(self):
-        datos = ArchivoServicio.leer_json(self.ruta_usuarios) or []
-        return [Usuario(u["id"], u["usuario"], u["contrasena"], u["nombre"]) for u in datos]
+    def _cargar_datos(self):
+        ruta_usuarios = os.path.join("datos", "usuarios.json")
+        if os.path.exists(ruta_usuarios):
+            with open(ruta_usuarios, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+                self.usuarios = [Usuario.from_dict(u) for u in datos]
 
-    def _cargar_productos(self):
-        datos = ArchivoServicio.leer_json(self.ruta_productos) or []
-        return [Producto(p["id"], p["nombre"], p["precio"], p["cantidad"]) for p in datos]
+        ruta_productos = os.path.join("datos", "productos.json")
+        if os.path.exists(ruta_productos):
+            with open(ruta_productos, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+                self.productos = [Producto.from_dict(p) for p in datos]
 
-    def _guardar_productos(self):
-        datos = [{"id": p.id, "nombre": p.nombre, "precio": p.precio, "cantidad": p.cantidad} for p in self.productos]
-        ArchivoServicio.escribir_json(self.ruta_productos, datos)
+        self._cargar_ventas()
 
-
-
-    def validar_acceso(self, usuario, contrasena):
-        for u in self.usuarios:
-            if u.usuario == usuario and u.contrasena == contrasena:
-                return u
+    def validar_acceso(self, nombre_usuario, contrasena):
+        for usuario in self.usuarios:
+            if hasattr(usuario, 'contrasena'):
+                if usuario.nombre == nombre_usuario and usuario.contrasena == contrasena:
+                    return usuario
+            else:
+                if usuario.nombre == nombre_usuario:
+                    return usuario
         return None
 
-    def listar_usuarios(self):
+    def obtener_usuarios(self):
         return self.usuarios
 
-    def listar_productos(self):
+    def obtener_productos(self):
         return self.productos
 
-    def registrar_producto(self, nombre, precio, cantidad):
-        try:
-            precio = float(precio)
-            cantidad = int(cantidad)
-        except ValueError:
-            return False,"Precio y cantidad deben ser numéricos"
-        if not nombre.strip():
-            return False,"El nombre no puede estar vacío"
-        nuevo_id = max([p.id for p in self.productos], default=0) + 1
-        self.productos.append(Producto(nuevo_id, nombre.strip(), precio, cantidad))
-        self._guardar_productos()
-        return True,f"Producto '{nombre}' registrado con ID {nuevo_id}"
+    def obtener_ventas(self):
+        return self.ventas
 
-    def consultar_producto(self, pid):
-        for p in self.productos:
+    def _cargar_ventas(self):
+        ruta = os.path.join("datos", "ventas.json")
+        if os.path.exists(ruta):
+            with open(ruta, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+                self.ventas = [Venta.from_dict(v) for v in datos]
 
-            if p.id == pid:
-                return True,f"{p.id}. {p.nombre} - ${p.precio} - {p.cantidad} uds"
-  
+    def _guardar_ventas(self):
+        ruta = os.path.join("datos", "ventas.json")
+        with open(ruta, "w", encoding="utf-8") as f:
+            json.dump([v.to_dict() for v in self.ventas], f, ensure_ascii=False, indent=2)
+
+    def registrar_venta(self, usuario_id, producto_id, cantidad, fecha=None):
+        nueva_venta = Venta(usuario_id, producto_id, cantidad, fecha)
+        self.ventas.append(nueva_venta)
+        self._guardar_ventas()
+        return nueva_venta

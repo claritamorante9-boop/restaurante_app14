@@ -1,13 +1,12 @@
 class Usuario:
-    def __init__(self, id, usuario, contrasena, nombre):
+    def __init__(self, id, nombre, contrasena=""):
         self.id = id
-        self.usuario = usuario
-        self.contrasena = contrasena
         self.nombre = nombre
+        self.contrasena = contrasena
 
-    def __str__(self):
-        return f"{self.nombre} ({self.usuario})"
+    def to_dict(self):
+        return {"id": self.id, "nombre": self.nombre, "contrasena": self.contrasena}
 
-
-        
-
+    @classmethod
+    def from_dict(cls, datos):
+        return cls(datos["id"], datos["nombre"], datos.get("contrasena", ""))

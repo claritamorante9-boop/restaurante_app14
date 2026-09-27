@@ -25,7 +25,7 @@ class App:
         self.usuario = usuario
         self.login_view.destruir()
         self.login_view = None
-        self.main_view = MainView(self.ventana, self.servicio, self.usuario, self._mostrar_login)
+        self.main_view = MainView(self.ventana, self.servicio, self.usuario)
         self.main_view.frame.pack(fill="both", expand=True)
 
 if __name__ == "__main__":

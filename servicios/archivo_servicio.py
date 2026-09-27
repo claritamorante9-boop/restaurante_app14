@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class ArchivoServicio:
     @staticmethod
     def leer_json(ruta):
@@ -8,3 +9,9 @@ class ArchivoServicio:
             return []
         with open(ruta, "r", encoding="utf-8") as archivo:
             return json.load(archivo)
+
+    @staticmethod
+    def escribir_json(ruta, datos):
+        with open(ruta, "w", encoding="utf-8") as archivo:
+            json.dump(datos, archivo, ensure_ascii=False, indent=2)
+

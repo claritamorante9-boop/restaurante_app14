@@ -1,6 +1,5 @@
 [
-  { "id": 1, "nombre": "Hamburguesa", "precio": 3.50, "cantidad": 20 },
-  { "id": 2, "nombre": "Pizza", "precio": 6.00, "cantidad": 10 },
-  { "id": 3, "nombre": "Refresco", "precio": 1.50, "cantidad": 50 }
+    {"id": 1, "nombre": "Hamburguesa", "precio": 5.50},
+    {"id": 2, "nombre": "Papas Fritas", "precio": 2.50},
+    {"id": 3, "nombre": "Refresco", "precio": 1.50}
 ]
-

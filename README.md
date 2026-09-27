@@ -1,39 +1,58 @@
- Restaurante App — Semana 14
+#  Restaurante App — Sistema de Ventas
+**Semana 15** — Proyecto de Registro y Gestión de Ventas
 
-Aplicación de gestión de un restaurante con interfaz gráfica (Tkinter/ttk). Esta versión corresponde a la **Semana 14**, donde se evoluciona la capa de interfaz mediante **componentes y contenedores**, incorporando formularios, tablas y operaciones CRUD sobre productos, manteniendo la arquitectura modular y la persistencia en archivos JSON.
+##  Descripción
+Aplicación de escritorio desarrollada en Python con Tkinter para el registro de ventas de un restaurante. Permite iniciar sesión, seleccionar productos, registrar ventas y visualizar el historial completo con fecha y hora. Los datos se guardan automáticamente en archivos JSON.
 
- #Estructura del proyecto
- restaurante_app/ ├── datos/ │ ├── productos.json │ └── usuarios.json ├── modelos/ │ ├── init.py │ ├── producto.py │ └── usuario.py ├── servicios/ │ ├── init.py │ ├── archivo_servicio.py │ └── restaurante_servicio.py ├── ui/ │ ├── init.py │ ├── login_view.py │ └── main_view.py └── main.py
+## Funcionalidades
+-  Inicio de sesión con usuario y contraseña
+-  Selección de usuario
+-  Catálogo de productos con precios
+-  Registro de ventas con cantidad
+-  Historial de ventas en tabla con:
+  - Usuario
+  - Producto
+  - Cantidad
+  - Fecha y hora
+-  Guardado automático en archivos JSON
+-  Logo personalizado de la aplicación
+-  Carga de datos persistente al abrir la app
 
-## Componentes y contenedores utilizados
+##  Tecnologías
+- **Python 3**
+- **Tkinter** — Interfaz gráfica
+- **Pillow** — Manejo de imágenes
+- **JSON** — Almacenamiento de datos
 
-- **Contenedores**: `Frame` para separar barra superior, panel de navegación y panel de contenido; `LabelFrame` implícito mediante secciones organizadas.
-- **Componentes**: `Label`, `Entry`, `Button`, `Treeview` (tabla), `Combobox` no utilizado por simplicidad.
-- **Gestores de geometría**: `pack` para organización general y `grid` dentro del formulario de productos.
+##  Estructura del Proyecto
+restaurante-app-semana15/
+├── assets/
+│ └── logo.png
+├── datos/
+│ ├── usuarios.json
+│ ├── productos.json
+│ └── ventas.json
+├── modelos/
+│ ├── init.py
+│ ├── usuario.py
+│ ├── producto.py
+│ └── venta.py
+├── servicios/
+│ ├── init.py
+│ └── restaurante_servicio.py
+├── ui/
+│ ├── init.py
+│ ├── login_view.py
+│ └── main_view.py
+├── main.py
+└── README.md
 
-## Operaciones sobre productos
+#Instalación y Ejecución
 
-- **Registrar**: añade un nuevo producto y guarda en `productos.json`.
-- **Consultar**: busca un producto por su ID y muestra su información.
-- **Actualizar**: modifica nombre, precio y cantidad de un producto existente.
-- **Eliminar**: elimina un producto por su ID y guarda los cambios.
-
-
-Todas las operaciones se delegan a `RestauranteServicio`, que valida y persiste mediante `ArchivoServicio`.
-
-## Persistencia
-
-Los productos se guardan en `datos/productos.json` a través del servicio correspondiente, por lo que los cambios se conservan al cerrar y volver a ejecutar la aplicación.
-
-
-
-## Ejecución
-
-Requisito: tener Python instalado.
-
-
-
+ 1. Instalar dependencias
 ```bash
+pip install pillow
 python main.py
-
-
+3. Credenciales de acceso
+Usuario: admin
+Contraseña: 1234
